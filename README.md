@@ -16,22 +16,22 @@ Este primer MVP no incluye IA, dashboard ni multi-tenant. Es un runner tecnico p
 ## Instalar
 
 ```bash
-npm.cmd install
-npx.cmd playwright install chromium
+pnpm install
+pnpm exec playwright install chromium
 ```
 
-En PowerShell usamos `npm.cmd` porque `npm.ps1` puede estar bloqueado por la politica local de ejecucion.
+El proyecto usa `pnpm` como package manager.
 
 ## Ejecutar ejemplo
 
 ```bash
-npm.cmd run run:example
+pnpm run run:example
 ```
 
 Tambien se puede pasar una receta:
 
 ```bash
-npm.cmd run run -- recipes/car-one.template.json
+pnpm run run -- recipes/car-one.template.json
 ```
 
 ## Resultado
@@ -64,4 +64,3 @@ CommerceGuard no debe modelarse como "monitor de Shopify", "monitor de Magento" 
 > Monitoring black-box de journeys comerciales criticos para ecommerce, CMS, storefronts headless y desarrollos custom.
 
 El core debe ser agnostico de plataforma. Las recetas pueden adaptarse a Shopify, WooCommerce, Magento, VTEX, Tiendanube, WordPress, headless o custom.
-
