@@ -69,14 +69,20 @@ El acceso interno no debe esconder problemas. Si CommerceGuard solo funciona por
 
 Buscar:
 
+- version de Next.js;
 - estructura `app/` o `pages/`;
+- tipo de rendering por ruta: SSR, SSG, ISR, client-side;
 - ruta `/comprar`;
 - ruta de detalle de vehiculo;
+- dynamic routes, rewrites y redirects;
+- middleware;
 - componente de listado;
 - componente de card;
 - componente de CTA comercial;
 - outcome despues de click en `Me interesa`;
 - clientes GraphQL/REST;
+- server components, client components, server actions o API routes;
+- estrategia de cache (`force-cache`, `no-store`, `revalidate`, SWR, React Query, Apollo u otro);
 - manejo de errores;
 - loading states;
 - empty states;
@@ -98,6 +104,15 @@ Mapa esperado:
   -> InterestCTA
   -> next commercial state
 ```
+
+La salida esperada de este relevamiento no es solo "donde esta el boton", sino:
+
+- que componente lo renderiza;
+- bajo que condiciones aparece;
+- si el click dispara side effects;
+- que estado observable confirma exito;
+- donde debe detenerse CommerceGuard;
+- que selectors son razonablemente estables para Playwright.
 
 ## Revisar despues: Magento
 
@@ -253,4 +268,3 @@ Si para Car One necesitamos:
 - mucho codigo especifico;
 - conocimiento interno exhaustivo;
 - mantenimiento manual frecuente.
-
