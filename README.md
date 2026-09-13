@@ -34,6 +34,18 @@ Tambien se puede pasar una receta:
 pnpm run run -- recipes/car-one.template.json
 ```
 
+## Ejecutar Magento local
+
+Primero definir las URLs del entorno Magento:
+
+```powershell
+$env:MAGENTO_BASE_URL="http://magento.local"
+$env:MAGENTO_PRODUCT_URL="http://magento.local/commerceguard-test-product.html"
+pnpm run run -- recipes/magento-local.template.json
+```
+
+El brief para preparar el entorno esta en `docs/magento-backend-agent-request.md`.
+
 ## Resultado
 
 Cada corrida escribe evidencia en:

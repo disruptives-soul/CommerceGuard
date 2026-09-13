@@ -1,0 +1,83 @@
+{
+  "id": "magento-local-cart-checkout-smoke",
+  "name": "Magento local cart and checkout smoke",
+  "baseUrl": "${MAGENTO_BASE_URL}",
+  "stopBeforeIrreversibleAction": true,
+  "retry": {
+    "attempts": 2,
+    "delayMs": 1500
+  },
+  "timeouts": {
+    "navigationMs": 30000,
+    "stepMs": 15000
+  },
+  "steps": [
+    {
+      "id": "open-product",
+      "action": "goto",
+      "url": "${MAGENTO_PRODUCT_URL}",
+      "assertions": [
+        {
+          "type": "notTextContains",
+          "value": "There has been an error processing your request"
+        },
+        {
+          "type": "selectorVisible",
+          "selector": "[data-cg='add-to-cart'], #product-addtocart-button"
+        }
+      ]
+    },
+    {
+      "id": "capture-product",
+      "action": "screenshot",
+      "name": "product-page"
+    },
+    {
+      "id": "add-to-cart",
+      "action": "click",
+      "selector": "[data-cg='add-to-cart'], #product-addtocart-button",
+      "assertions": [
+        {
+          "type": "notTextContains",
+          "value": "This product is out of stock"
+        }
+      ]
+    },
+    {
+      "id": "wait-cart-success",
+      "action": "waitForSelector",
+      "selector": "[data-cg='cart-success'], .message-success, .messages .success"
+    },
+    {
+      "id": "open-cart",
+      "action": "goto",
+      "url": "${MAGENTO_BASE_URL}/checkout/cart/",
+      "assertions": [
+        {
+          "type": "selectorVisible",
+          "selector": "[data-cg='proceed-to-checkout'], [data-role='proceed-to-checkout']"
+        }
+      ]
+    },
+    {
+      "id": "capture-cart",
+      "action": "screenshot",
+      "name": "cart"
+    },
+    {
+      "id": "go-to-checkout",
+      "action": "click",
+      "selector": "[data-cg='proceed-to-checkout'], [data-role='proceed-to-checkout']"
+    },
+    {
+      "id": "wait-checkout",
+      "action": "waitForSelector",
+      "selector": "[data-cg='checkout-email'], #customer-email, input[name='username']"
+    },
+    {
+      "id": "capture-checkout-entry",
+      "action": "screenshot",
+      "name": "checkout-entry"
+    }
+  ]
+}
