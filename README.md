@@ -46,6 +46,15 @@ pnpm run run -- recipes/magento-local.template.json
 
 El brief para preparar el entorno esta en `docs/magento-backend-agent-request.md`.
 
+## Discovery Car One
+
+CommerceGuard debe validarse primero como black-box sobre el journey real del usuario. El acceso al codigo de Car One puede usarse como apoyo white-box para entender el flujo y crear fallos controlados, pero no debe ser requisito permanente del producto.
+
+Documentos utiles:
+
+- `docs/technical-discovery-plan.md`
+- `docs/carone-code-request.md`
+
 ## Resultado
 
 Cada corrida escribe evidencia en:
