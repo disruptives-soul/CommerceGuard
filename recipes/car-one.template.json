@@ -1,0 +1,37 @@
+{
+  "id": "car-one-lead-template",
+  "name": "Car One critical lead journey template",
+  "baseUrl": "https://www.carone.com.ar",
+  "stopBeforeIrreversibleAction": true,
+  "retry": {
+    "attempts": 2,
+    "delayMs": 1500
+  },
+  "timeouts": {
+    "navigationMs": 20000,
+    "stepMs": 12000
+  },
+  "steps": [
+    {
+      "id": "open-entry",
+      "action": "goto",
+      "url": "REEMPLAZAR_CON_URL_REAL_DEL_JOURNEY",
+      "assertions": [
+        {
+          "type": "notTextContains",
+          "value": "Error"
+        }
+      ]
+    },
+    {
+      "id": "wait-primary-cta",
+      "action": "waitForSelector",
+      "selector": "REEMPLAZAR_CON_SELECTOR_CTA"
+    },
+    {
+      "id": "capture-before-action",
+      "action": "screenshot",
+      "name": "before-primary-action"
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "name": "commerceguard-runner",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Black-box monitoring runner for critical commerce journeys.",
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "run": "tsx src/cli.ts",
+    "run:example": "tsx src/cli.ts recipes/example-smoke.json",
+    "check": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "playwright": "^1.47.2",
+    "tsx": "^4.19.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.2",
+    "typescript": "^5.6.2"
+  }
+}

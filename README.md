@@ -1,0 +1,67 @@
+# CommerceGuard Runner
+
+CommerceGuard es un monitor black-box para journeys comerciales criticos. No mira si un sitio responde `200`; valida si el flujo que vende o genera leads sigue funcionando desde la mirada de un usuario real.
+
+Este primer MVP no incluye IA, dashboard ni multi-tenant. Es un runner tecnico para validar si el core funciona antes de convertirlo en SaaS.
+
+## Que hace
+
+- Abre un navegador real con Playwright.
+- Ejecuta una receta de journey.
+- Captura screenshots, errores de consola y requests fallidos.
+- Reintenta antes de declarar falla.
+- Genera un `result.json` con clasificacion y evidencia.
+- Permite cortar antes de acciones irreversibles como pagos, reservas, compras o envios reales.
+
+## Instalar
+
+```bash
+npm.cmd install
+npx.cmd playwright install chromium
+```
+
+En PowerShell usamos `npm.cmd` porque `npm.ps1` puede estar bloqueado por la politica local de ejecucion.
+
+## Ejecutar ejemplo
+
+```bash
+npm.cmd run run:example
+```
+
+Tambien se puede pasar una receta:
+
+```bash
+npm.cmd run run -- recipes/car-one.template.json
+```
+
+## Resultado
+
+Cada corrida escribe evidencia en:
+
+```text
+runs/<journey-id>/<timestamp>/
+```
+
+Archivos principales:
+
+- `result.json`: resumen estructurado.
+- `screenshots/*.png`: capturas por step.
+
+## Clasificaciones
+
+- `PASS`: el journey completo paso.
+- `JOURNEY_FAILURE`: el sitio cargo, pero el flujo no cumplio una asercion.
+- `TIMEOUT`: se agoto el tiempo de espera.
+- `AUTOMATION_BLOCKED`: el sitio bloqueo la automatizacion.
+- `NETWORK_FAILURE`: fallo de red relevante.
+- `UNEXPECTED_STATE`: estado no previsto.
+- `EXTERNAL_SERVICE_FAILURE`: dependencia externa caida o inestable.
+
+## Regla de producto
+
+CommerceGuard no debe modelarse como "monitor de Shopify", "monitor de Magento" o "monitor de WooCommerce". La categoria correcta es:
+
+> Monitoring black-box de journeys comerciales criticos para ecommerce, CMS, storefronts headless y desarrollos custom.
+
+El core debe ser agnostico de plataforma. Las recetas pueden adaptarse a Shopify, WooCommerce, Magento, VTEX, Tiendanube, WordPress, headless o custom.
+

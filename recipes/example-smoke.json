@@ -1,0 +1,36 @@
+{
+  "id": "example-smoke",
+  "name": "Example Domain smoke test",
+  "baseUrl": "https://example.com",
+  "stopBeforeIrreversibleAction": true,
+  "retry": {
+    "attempts": 2,
+    "delayMs": 1000
+  },
+  "timeouts": {
+    "navigationMs": 15000,
+    "stepMs": 10000
+  },
+  "steps": [
+    {
+      "id": "open-home",
+      "action": "goto",
+      "url": "https://example.com",
+      "assertions": [
+        {
+          "type": "urlContains",
+          "value": "example.com"
+        },
+        {
+          "type": "textContains",
+          "value": "Example Domain"
+        }
+      ]
+    },
+    {
+      "id": "capture-home",
+      "action": "screenshot",
+      "name": "home"
+    }
+  ]
+}
