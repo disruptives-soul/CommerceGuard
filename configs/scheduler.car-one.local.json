@@ -1,0 +1,19 @@
+{
+  "projectId": "car-one",
+  "environment": "local",
+  "intervalMs": 300000,
+  "jobs": [
+    {
+      "id": "buy-interest-local-failure-lab-normal",
+      "recipe": "recipes/car-one.failure-lab-local.json"
+    }
+  ],
+  "alertPolicy": {
+    "notifyOn": ["COMMERCE_FAILURE", "MONITOR_FAILURE"],
+    "minConsecutiveFailures": 2,
+    "notifyOnRecovery": true
+  },
+  "notifications": {
+    "mode": "stdout"
+  }
+}

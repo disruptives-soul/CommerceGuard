@@ -8,7 +8,17 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "run": "tsx src/cli.ts",
+    "run:repeat": "tsx src/reports/runRepeat.ts",
     "run:example": "tsx src/cli.ts recipes/example-smoke.json",
+    "mock:car-one": "tsx src/dev/carOneMockServer.ts",
+    "failure-lab:car-one": "tsx src/dev/runCarOneFailureLab.ts",
+    "scheduler": "tsx src/scheduler/runScheduler.ts",
+    "report:runs": "tsx src/reports/summarizeRuns.ts",
+    "report:real": "tsx src/reports/summarizeRuns.ts --group real",
+    "report:failure-lab": "tsx src/reports/summarizeRuns.ts --group failure-lab",
+    "report:window": "tsx src/reports/summarizeWindow.ts",
+    "report:scheduler": "tsx src/reports/summarizeSchedulerEvents.ts",
+    "report:daily": "tsx src/reports/dailySummary.ts",
     "check": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {

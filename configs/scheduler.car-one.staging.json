@@ -1,0 +1,20 @@
+{
+  "projectId": "car-one",
+  "environment": "staging",
+  "intervalMs": 300000,
+  "jobs": [
+    {
+      "id": "buy-interest-staging",
+      "recipe": "recipes/car-one.template.json"
+    }
+  ],
+  "alertPolicy": {
+    "notifyOn": ["COMMERCE_FAILURE", "MONITOR_FAILURE"],
+    "minConsecutiveFailures": 2,
+    "notifyOnRecovery": true
+  },
+  "notifications": {
+    "mode": "stdout",
+    "webhookUrlEnv": "CG_WEBHOOK_URL"
+  }
+}

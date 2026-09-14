@@ -4,6 +4,13 @@ export function classifyError(error: unknown): ResultStatus {
   const message = error instanceof Error ? error.message : String(error);
   const normalized = message.toLowerCase();
 
+  if (
+    normalized.includes("locator.waitfor: timeout") ||
+    normalized.includes("locator.click: timeout")
+  ) {
+    return "JOURNEY_FAILURE";
+  }
+
   if (normalized.includes("timeout")) {
     return "TIMEOUT";
   }

@@ -1,0 +1,13 @@
+services:
+  commerceguard:
+    build: .
+    restart: unless-stopped
+    environment:
+      CARONE_BASE_URL: "https://stg.carone.com.ar"
+      CG_WEBHOOK_URL: "${CG_WEBHOOK_URL}"
+    volumes:
+      - commerceguard-runs:/app/runs
+    command: ["pnpm", "run", "scheduler", "--", "configs/scheduler.car-one.staging.slack.json"]
+
+volumes:
+  commerceguard-runs:

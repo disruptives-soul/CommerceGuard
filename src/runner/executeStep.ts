@@ -1,5 +1,5 @@
 import { join } from "node:path";
-import type { Page } from "playwright";
+import type { Locator, Page } from "playwright";
 import type { Assertion, JourneyStep, StepResult } from "../types.js";
 
 export interface ExecuteStepOptions {
@@ -13,6 +13,7 @@ export interface ExecuteStepOptions {
 export async function executeStep(options: ExecuteStepOptions): Promise<StepResult> {
   const started = Date.now();
   const { page, step, screenshotsDir, navigationTimeoutMs, stepTimeoutMs } = options;
+  let clickedElement: StepResult["clickedElement"];
 
   try {
     switch (step.action) {
@@ -23,7 +24,13 @@ export async function executeStep(options: ExecuteStepOptions): Promise<StepResu
 
       case "click":
         if (!step.selector) throw new Error(`Step ${step.id} requires selector`);
+        clickedElement = await describeLocator(page.locator(step.selector).first());
         await page.locator(step.selector).click({ timeout: stepTimeoutMs });
+        break;
+
+      case "clickFirst":
+        if (!step.selector) throw new Error(`Step ${step.id} requires selector`);
+        clickedElement = await clickFirstVisible(page, step.selector, stepTimeoutMs, step.clickPosition);
         break;
 
       case "fill":
@@ -33,7 +40,7 @@ export async function executeStep(options: ExecuteStepOptions): Promise<StepResu
 
       case "waitForSelector":
         if (!step.selector) throw new Error(`Step ${step.id} requires selector`);
-        await page.locator(step.selector).waitFor({ state: "visible", timeout: stepTimeoutMs });
+        await waitForFirstVisible(page, step.selector, stepTimeoutMs);
         break;
 
       case "assertText":
@@ -43,7 +50,7 @@ export async function executeStep(options: ExecuteStepOptions): Promise<StepResu
 
       case "assertUrl":
         if (!step.value) throw new Error(`Step ${step.id} requires value`);
-        assertUrlContains(page.url(), step.value);
+        await assertUrlContains(page, step.value, stepTimeoutMs);
         break;
 
       case "screenshot":
@@ -66,7 +73,9 @@ export async function executeStep(options: ExecuteStepOptions): Promise<StepResu
       action: step.action,
       status: "PASS",
       durationMs: Date.now() - started,
-      screenshot
+      currentUrl: page.url(),
+      screenshot,
+      clickedElement
     };
   } catch (error) {
     const screenshot = await captureStepScreenshot(page, screenshotsDir, `${step.id}-failure`, step.name);
@@ -75,8 +84,10 @@ export async function executeStep(options: ExecuteStepOptions): Promise<StepResu
       action: step.action,
       status: "FAIL",
       durationMs: Date.now() - started,
+      currentUrl: page.url(),
       error: error instanceof Error ? error.message : String(error),
-      screenshot
+      screenshot,
+      clickedElement
     };
   }
 }
@@ -84,7 +95,7 @@ export async function executeStep(options: ExecuteStepOptions): Promise<StepResu
 async function runAssertion(page: Page, assertion: Assertion, timeoutMs: number): Promise<void> {
   switch (assertion.type) {
     case "urlContains":
-      assertUrlContains(page.url(), assertion.value);
+      await assertUrlContains(page, assertion.value, timeoutMs);
       return;
 
     case "textContains":
@@ -96,20 +107,97 @@ async function runAssertion(page: Page, assertion: Assertion, timeoutMs: number)
       return;
 
     case "selectorVisible":
-      await page.locator(assertion.selector).waitFor({ state: "visible", timeout: timeoutMs });
+      await waitForFirstVisible(page, assertion.selector, timeoutMs);
       return;
   }
 }
 
-function assertUrlContains(currentUrl: string, expected: string): void {
-  if (!currentUrl.includes(expected)) {
-    throw new Error(`Assertion failed: URL "${currentUrl}" does not contain "${expected}"`);
+async function clickFirstVisible(
+  page: Page,
+  selector: string,
+  timeoutMs: number,
+  position?: { x: number; y: number }
+): Promise<StepResult["clickedElement"]> {
+  const locator = await firstVisibleLocator(page, selector, timeoutMs);
+  const clickedElement = await describeLocator(locator);
+  await locator.click({ timeout: timeoutMs, position });
+  return clickedElement;
+}
+
+async function waitForFirstVisible(page: Page, selector: string, timeoutMs: number): Promise<void> {
+  await firstVisibleLocator(page, selector, timeoutMs);
+}
+
+async function firstVisibleLocator(page: Page, selector: string, timeoutMs: number): Promise<Locator> {
+  const deadline = Date.now() + timeoutMs;
+  const locator = page.locator(selector);
+
+  while (Date.now() < deadline) {
+    const count = await locator.count();
+
+    for (let index = 0; index < count; index += 1) {
+      const candidate = locator.nth(index);
+
+      if (await candidate.isVisible().catch(() => false)) {
+        return candidate;
+      }
+    }
+
+    await page.waitForTimeout(250);
   }
+
+  throw new Error(`locator.waitFor: Timeout ${timeoutMs}ms exceeded while waiting for first visible "${selector}"`);
+}
+
+async function describeLocator(locator: Locator): Promise<StepResult["clickedElement"]> {
+  const [text, href, dataCg, sku, condition, urlKey] = await Promise.all([
+    locator.innerText({ timeout: 1000 }).catch(() => undefined),
+    locator.getAttribute("href", { timeout: 1000 }).catch(() => undefined),
+    locator.getAttribute("data-cg", { timeout: 1000 }).catch(() => undefined),
+    locator.getAttribute("data-cg-sku", { timeout: 1000 }).catch(() => undefined),
+    locator.getAttribute("data-cg-condition", { timeout: 1000 }).catch(() => undefined),
+    locator.getAttribute("data-cg-url-key", { timeout: 1000 }).catch(() => undefined)
+  ]);
+
+  return {
+    text: text?.replace(/\s+/g, " ").trim().slice(0, 240),
+    href: href ?? undefined,
+    dataCg: dataCg ?? undefined,
+    sku: sku ?? undefined,
+    condition: condition ?? undefined,
+    urlKey: urlKey ?? undefined
+  };
+}
+
+async function assertUrlContains(page: Page, expected: string, timeoutMs: number): Promise<void> {
+  const deadline = Date.now() + timeoutMs;
+
+  while (Date.now() < deadline) {
+    if (page.url().includes(expected)) {
+      return;
+    }
+
+    await page.waitForTimeout(250);
+  }
+
+  throw new Error(`Assertion failed: URL "${page.url()}" does not contain "${expected}"`);
 }
 
 async function assertTextContains(page: Page, expected: string, timeoutMs: number): Promise<void> {
-  const locator = page.getByText(expected, { exact: false }).first();
-  await locator.waitFor({ state: "visible", timeout: timeoutMs });
+  const expectedText = normalizeText(expected);
+  const deadline = Date.now() + timeoutMs;
+
+  while (Date.now() < deadline) {
+    const bodyText = await page.locator("body").innerText({ timeout: Math.min(1000, timeoutMs) });
+
+    if (normalizeText(bodyText).includes(expectedText)) {
+      return;
+    }
+
+    await page.waitForTimeout(250);
+  }
+
+  throw new Error(`Assertion failed: page does not contain text "${expected}"`);
 }
 
 async function assertTextNotContains(page: Page, unexpected: string): Promise<void> {
@@ -117,6 +205,13 @@ async function assertTextNotContains(page: Page, unexpected: string): Promise<vo
   if (bodyText.includes(unexpected)) {
     throw new Error(`Assertion failed: page contains unexpected text "${unexpected}"`);
   }
+}
+
+function normalizeText(value: string): string {
+  return value
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLowerCase();
 }
 
 async function captureStepScreenshot(

@@ -1,24 +1,24 @@
 {
-  "id": "car-one-buy-interest-v0",
-  "name": "Car One buy interest journey v0",
+  "id": "car-one-failure-lab-local",
+  "name": "Car One local failure lab",
   "projectId": "car-one",
   "adapter": "car-one",
-  "reportGroup": "real",
-  "baseUrl": "${CARONE_BASE_URL}",
+  "reportGroup": "failure-lab",
+  "baseUrl": "http://127.0.0.1:4173",
   "stopBeforeIrreversibleAction": true,
   "retry": {
-    "attempts": 2,
-    "delayMs": 1500
+    "attempts": 1,
+    "delayMs": 0
   },
   "timeouts": {
-    "navigationMs": 30000,
-    "stepMs": 20000
+    "navigationMs": 7000,
+    "stepMs": 5000
   },
   "steps": [
     {
       "id": "open-buy-listing",
       "action": "goto",
-      "url": "${CARONE_BASE_URL}/comprar",
+      "url": "http://127.0.0.1:4173/comprar",
       "assertions": [
         {
           "type": "urlContains",
@@ -38,11 +38,6 @@
       "id": "wait-vehicle-card-link",
       "action": "waitForSelector",
       "selector": "[data-cg=\"vehicle-detail-link\"], a[href*=\"/comprar/usados/\"], a[href*=\"/comprar/0km/\"], a[href*=\"/comprar/pda/\"]"
-    },
-    {
-      "id": "capture-listing",
-      "action": "screenshot",
-      "name": "car-one-listing"
     },
     {
       "id": "open-first-vehicle-detail",
@@ -70,11 +65,6 @@
       "value": "$"
     },
     {
-      "id": "capture-detail-before-interest",
-      "action": "screenshot",
-      "name": "car-one-detail-before-interest"
-    },
-    {
       "id": "click-interest-cta",
       "action": "clickFirst",
       "selector": "[data-cg=\"interest-cta\"], button:has-text(\"Me interesa\")"
@@ -89,11 +79,6 @@
           "value": "Continuar"
         }
       ]
-    },
-    {
-      "id": "capture-stop-state",
-      "action": "screenshot",
-      "name": "car-one-stop-before-submit"
     }
   ]
 }

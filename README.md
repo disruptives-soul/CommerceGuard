@@ -54,6 +54,10 @@ Documentos utiles:
 
 - `docs/technical-discovery-plan.md`
 - `docs/carone-code-request.md`
+- `docs/carone-frontend-discovery-report.md`
+- `docs/carone-commerceguard-v01.md`
+- `docs/failure-lab.md`
+- `docs/v0.2-runner.md`
 
 ## Resultado
 
@@ -68,15 +72,80 @@ Archivos principales:
 - `result.json`: resumen estructurado.
 - `screenshots/*.png`: capturas por step.
 
-## Clasificaciones
+## Clasificacion v0.2
 
-- `PASS`: el journey completo paso.
-- `JOURNEY_FAILURE`: el sitio cargo, pero el flujo no cumplio una asercion.
-- `TIMEOUT`: se agoto el tiempo de espera.
-- `AUTOMATION_BLOCKED`: el sitio bloqueo la automatizacion.
-- `NETWORK_FAILURE`: fallo de red relevante.
-- `UNEXPECTED_STATE`: estado no previsto.
-- `EXTERNAL_SERVICE_FAILURE`: dependencia externa caida o inestable.
+Cada corrida conserva un `status` tecnico para debug y expone un `productStatus` para tomar decisiones:
+
+- `PASS`: el journey llego al STOP configurado.
+- `COMMERCE_FAILURE`: el journey comercial observable fallo.
+- `MONITOR_FAILURE`: fallo el runner, config, receta, guardrail o entorno.
+- `INCONCLUSIVE`: timeout, red, challenge, bloqueo ambiguo o retry recuperado.
+
+Comandos utiles:
+
+```powershell
+pnpm.cmd run run -- recipes/car-one.template.json
+pnpm.cmd run run:repeat -- recipes/car-one.template.json --count 20
+pnpm.cmd run report:runs 20
+pnpm.cmd run report:real -- 20
+pnpm.cmd run report:failure-lab -- 20
+pnpm.cmd run report:window -- --group real --hours 24 --project car-one --env staging
+pnpm.cmd run report:scheduler -- --hours 24 --project car-one --env staging
+pnpm.cmd run report:daily -- --hours 24 --project car-one --env staging
+```
+
+Submit controlado solo se permite en local/staging con guardrails:
+
+```powershell
+$env:CARONE_BASE_URL="https://stg.carone.com.ar"
+$env:CG_ALLOW_SUBMIT="true"
+$env:CG_TEST_LEAD_NAME="neoh lugo"
+$env:CG_TEST_LEAD_PHONE="1124037999"
+pnpm.cmd run run -- recipes/car-one.submit-controlled.template.json
+```
+
+## Scheduler piloto
+
+Scheduler local una sola corrida:
+
+```powershell
+pnpm.cmd run mock:car-one
+pnpm.cmd run scheduler -- configs/scheduler.car-one.local.json --once
+```
+
+Scheduler staging:
+
+```powershell
+$env:CARONE_BASE_URL="https://stg.carone.com.ar"
+$env:CG_WEBHOOK_URL="<slack-incoming-webhook-url>"
+pnpm.cmd run scheduler -- configs/scheduler.car-one.staging.slack.json
+```
+
+La politica default alerta solo por `COMMERCE_FAILURE` y `MONITOR_FAILURE` despues de 2 fallas consecutivas. `INCONCLUSIVE` queda para revision de evidencia, no para alertar fuerte.
+
+La guia de piloto recurrente staging esta en `docs/operations/v0.4-staging-pilot.md`.
+
+## Deploy staging
+
+Para dejarlo corriendo fuera de una notebook:
+
+```text
+docs/operations/deploy-staging-vm.md
+```
+
+Incluye Docker Compose, Slack webhook por `.env` y volumen persistente para `runs/`.
+
+Alternativa Vercel + Supabase:
+
+```text
+docs/operations/deploy-vercel-supabase.md
+```
+
+Variables Vercel y DNS Cloudflare:
+
+```text
+docs/operations/vercel-env-cloudflare.md
+```
 
 ## Regla de producto
 

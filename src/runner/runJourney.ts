@@ -1,8 +1,11 @@
+import { mkdir } from "node:fs/promises";
+import { join } from "node:path";
 import { chromium } from "playwright";
-import { createRunArtifacts, writeResult } from "../evidence/artifacts.js";
-import type { EvidenceEvent, JourneyConfig, JourneyResult, StepResult } from "../types.js";
+import { createRunArtifacts, writeReport, writeResult } from "../evidence/artifacts.js";
+import type { EvidenceEvent, JourneyAttemptResult, JourneyConfig, JourneyResult, StepResult } from "../types.js";
 import { classifyError } from "./classifyResult.js";
 import { executeStep } from "./executeStep.js";
+import { classifyProductStatus } from "./productStatus.js";
 import { waitBeforeRetry } from "./retryPolicy.js";
 
 export async function runJourney(config: JourneyConfig): Promise<JourneyResult> {
@@ -12,12 +15,24 @@ export async function runJourney(config: JourneyConfig): Promise<JourneyResult> 
   const startedAt = new Date();
 
   let lastResult: JourneyResult | undefined;
+  const attemptsDetail: JourneyAttemptResult[] = [];
 
   for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
-    lastResult = await runJourneyAttempt(config, attempt, startedAt, artifacts.runDir, artifacts.screenshotsDir);
+    const attemptScreenshotsDir = join(artifacts.screenshotsDir, `attempt-${attempt}`);
+    await mkdir(attemptScreenshotsDir, { recursive: true });
+
+    lastResult = await runJourneyAttempt(config, attempt, startedAt, artifacts.runDir, attemptScreenshotsDir);
+    attemptsDetail.push(toAttemptDetail(lastResult, attempt));
+    lastResult.attemptsDetail = attemptsDetail;
 
     if (lastResult.status === "PASS") {
+      if (attempt > 1) {
+        lastResult.recoveredByRetry = true;
+        lastResult.productStatus = "INCONCLUSIVE";
+        lastResult.reason = "Journey recovered after a failed attempt; treat as intermittent until stability is proven.";
+      }
       await writeResult(lastResult, artifacts.resultPath);
+      await writeReport(lastResult, artifacts.reportPath);
       return lastResult;
     }
 
@@ -30,7 +45,9 @@ export async function runJourney(config: JourneyConfig): Promise<JourneyResult> 
     throw new Error("Journey did not run");
   }
 
+  lastResult.attemptsDetail = attemptsDetail;
   await writeResult(lastResult, artifacts.resultPath);
+  await writeReport(lastResult, artifacts.reportPath);
   return lastResult;
 }
 
@@ -96,34 +113,96 @@ async function runJourneyAttempt(
     }
 
     const finishedAt = new Date();
+    const selectedVehicle = getSelectedVehicle(steps);
+    const classification = classifyProductStatus("PASS", steps);
     return {
       journeyId: config.id,
       journeyName: config.name,
+      projectId: config.projectId,
+      adapter: config.adapter,
+      reportGroup: config.reportGroup ?? "real",
+      environment: config.environment,
       status: "PASS",
+      productStatus: classification.productStatus,
+      reason: classification.reason,
       startedAt: startedAt.toISOString(),
       finishedAt: finishedAt.toISOString(),
       durationMs: finishedAt.getTime() - startedAt.getTime(),
       attempts: attempt,
-      runDir,
-      steps,
-      evidence
-    };
-  } catch (error) {
-    const finishedAt = new Date();
-    return {
-      journeyId: config.id,
-      journeyName: config.name,
-      status: classifyError(error),
-      startedAt: startedAt.toISOString(),
-      finishedAt: finishedAt.toISOString(),
-      durationMs: finishedAt.getTime() - startedAt.getTime(),
-      attempts: attempt,
+      recoveredByRetry: false,
       runDir,
       steps,
       evidence,
+      currentUrl: page.url(),
+      selectedVehicle
+    };
+  } catch (error) {
+    const finishedAt = new Date();
+    const status = classifyError(error);
+    const selectedVehicle = getSelectedVehicle(steps);
+    const failedStep = steps.find((step) => step.status === "FAIL")?.id;
+    const classification = classifyProductStatus(status, steps, error instanceof Error ? error.message : String(error));
+    return {
+      journeyId: config.id,
+      journeyName: config.name,
+      projectId: config.projectId,
+      adapter: config.adapter,
+      reportGroup: config.reportGroup ?? "real",
+      environment: config.environment,
+      status,
+      productStatus: classification.productStatus,
+      reason: classification.reason,
+      startedAt: startedAt.toISOString(),
+      finishedAt: finishedAt.toISOString(),
+      durationMs: finishedAt.getTime() - startedAt.getTime(),
+      attempts: attempt,
+      recoveredByRetry: false,
+      runDir,
+      steps,
+      evidence,
+      failedStep,
+      currentUrl: page.url(),
+      selectedVehicle,
       error: error instanceof Error ? error.message : String(error)
     };
   } finally {
     await browser.close();
   }
+}
+
+function toAttemptDetail(result: JourneyResult, attempt: number): JourneyAttemptResult {
+  return {
+    attempt,
+    status: result.status,
+    productStatus: result.productStatus,
+    reason: result.reason,
+    durationMs: result.durationMs,
+    steps: result.steps,
+    evidence: result.evidence,
+    failedStep: result.failedStep,
+    currentUrl: result.currentUrl,
+    selectedVehicle: result.selectedVehicle,
+    error: result.error
+  };
+}
+
+function getSelectedVehicle(steps: StepResult[]): JourneyResult["selectedVehicle"] | undefined {
+  const vehicleStep = steps.find((step) =>
+    step.clickedElement?.dataCg === "vehicle-detail-link" ||
+    step.clickedElement?.href?.includes("/comprar/")
+  );
+
+  if (!vehicleStep?.clickedElement) {
+    return undefined;
+  }
+
+  const href = vehicleStep.clickedElement.href;
+  const condition = href?.match(/\/comprar\/([^/]+)\//)?.[1];
+
+  return {
+    name: vehicleStep.clickedElement.text,
+    url: href,
+    sku: vehicleStep.clickedElement.sku,
+    condition: vehicleStep.clickedElement.condition ?? condition
+  };
 }

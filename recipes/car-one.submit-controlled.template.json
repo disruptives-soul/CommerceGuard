@@ -1,14 +1,23 @@
 {
-  "id": "car-one-buy-interest-v0",
-  "name": "Car One buy interest journey v0",
+  "id": "car-one-buy-interest-submit-controlled",
+  "name": "Car One controlled interest submit journey",
   "projectId": "car-one",
   "adapter": "car-one",
   "reportGroup": "real",
   "baseUrl": "${CARONE_BASE_URL}",
-  "stopBeforeIrreversibleAction": true,
+  "stopBeforeIrreversibleAction": false,
+  "safeSubmit": true,
+  "safety": {
+    "allowedBaseUrlPrefixes": [
+      "http://localhost:",
+      "http://127.0.0.1:",
+      "https://stg.carone.com.ar"
+    ],
+    "requiredEnv": {}
+  },
   "retry": {
-    "attempts": 2,
-    "delayMs": 1500
+    "attempts": 1,
+    "delayMs": 0
   },
   "timeouts": {
     "navigationMs": 30000,
@@ -40,24 +49,13 @@
       "selector": "[data-cg=\"vehicle-detail-link\"], a[href*=\"/comprar/usados/\"], a[href*=\"/comprar/0km/\"], a[href*=\"/comprar/pda/\"]"
     },
     {
-      "id": "capture-listing",
-      "action": "screenshot",
-      "name": "car-one-listing"
-    },
-    {
       "id": "open-first-vehicle-detail",
       "action": "clickFirst",
       "selector": "[data-cg=\"vehicle-detail-link\"], a[href*=\"/comprar/usados/\"], a[href*=\"/comprar/0km/\"], a[href*=\"/comprar/pda/\"]",
       "clickPosition": {
         "x": 24,
         "y": 24
-      },
-      "assertions": [
-        {
-          "type": "urlContains",
-          "value": "/comprar/"
-        }
-      ]
+      }
     },
     {
       "id": "wait-interest-cta",
@@ -70,30 +68,52 @@
       "value": "$"
     },
     {
-      "id": "capture-detail-before-interest",
-      "action": "screenshot",
-      "name": "car-one-detail-before-interest"
-    },
-    {
       "id": "click-interest-cta",
       "action": "clickFirst",
       "selector": "[data-cg=\"interest-cta\"], button:has-text(\"Me interesa\")"
     },
     {
-      "id": "stop-before-submit",
+      "id": "wait-interest-form",
       "action": "assertText",
-      "value": "Telefono de contacto",
+      "value": "Telefono de contacto"
+    },
+    {
+      "id": "fill-test-name",
+      "action": "fill",
+      "selector": "[data-cg=\"lead-form-name\"], input#name",
+      "value": "${CG_TEST_LEAD_NAME}"
+    },
+    {
+      "id": "fill-test-phone",
+      "action": "fill",
+      "selector": "[data-cg=\"lead-form-phone\"], input#phone",
+      "value": "${CG_TEST_LEAD_PHONE}"
+    },
+    {
+      "id": "capture-before-submit",
+      "action": "screenshot",
+      "name": "car-one-before-controlled-submit"
+    },
+    {
+      "id": "submit-interest-form",
+      "action": "clickFirst",
+      "selector": "[data-cg=\"stop-before-submit\"], button:has-text(\"Continuar\")"
+    },
+    {
+      "id": "wait-submit-success",
+      "action": "assertText",
+      "value": "Gracias por completar tus datos",
       "assertions": [
         {
           "type": "textContains",
-          "value": "Continuar"
+          "value": "Seguir configurando"
         }
       ]
     },
     {
-      "id": "capture-stop-state",
+      "id": "capture-submit-success",
       "action": "screenshot",
-      "name": "car-one-stop-before-submit"
+      "name": "car-one-submit-success"
     }
   ]
 }

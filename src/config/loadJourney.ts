@@ -8,6 +8,7 @@ export async function loadJourneyConfig(filePath: string): Promise<JourneyConfig
   const config = JSON.parse(expandEnvironmentVariables(raw)) as JourneyConfig;
 
   validateJourneyConfig(config, absolutePath);
+  validateSafety(config, absolutePath);
   return config;
 }
 
@@ -19,8 +20,15 @@ function expandEnvironmentVariables(raw: string): string {
       throw new Error(`Missing environment variable: ${name}`);
     }
 
-    return value.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+    return normalizeEnvironmentValue(value).replace(/\\/g, "\\\\").replace(/"/g, '\\"');
   });
+}
+
+function normalizeEnvironmentValue(value: string): string {
+  const trimmed = value.trim();
+  const markdownLinkMatch = /^\[(https?:\/\/[^\]]+)\]\(https?:\/\/[^)]+\)$/.exec(trimmed);
+
+  return markdownLinkMatch?.[1] ?? trimmed;
 }
 
 function validateJourneyConfig(config: JourneyConfig, filePath: string): void {
@@ -39,6 +47,46 @@ function validateJourneyConfig(config: JourneyConfig, filePath: string): void {
   for (const step of config.steps) {
     if (!step.id || !step.action) {
       throw new Error(`Invalid journey config ${filePath}: every step needs id and action`);
+    }
+  }
+}
+
+function validateSafety(config: JourneyConfig, filePath: string): void {
+  const allowedPrefixes = config.safety?.allowedBaseUrlPrefixes ?? [];
+
+  if (!config.stopBeforeIrreversibleAction && !config.safeSubmit) {
+    throw new Error(
+      `Unsafe journey config ${filePath}: irreversible actions require safeSubmit=true`
+    );
+  }
+
+  if (config.safeSubmit && process.env.CG_ALLOW_SUBMIT !== "true") {
+    throw new Error(
+      `Unsafe journey config ${filePath}: safeSubmit requires CG_ALLOW_SUBMIT="true"`
+    );
+  }
+
+  if (config.safeSubmit && allowedPrefixes.length === 0) {
+    throw new Error(
+      `Unsafe journey config ${filePath}: safeSubmit requires allowedBaseUrlPrefixes`
+    );
+  }
+
+  if (allowedPrefixes.length > 0 && !allowedPrefixes.some((prefix) => config.baseUrl.startsWith(prefix))) {
+    throw new Error(
+      `Unsafe journey config ${filePath}: baseUrl "${config.baseUrl}" is not in allowedBaseUrlPrefixes`
+    );
+  }
+
+  const requiredEnv = config.safety?.requiredEnv ?? {};
+
+  for (const [name, expectedValue] of Object.entries(requiredEnv)) {
+    const actualValue = process.env[name];
+
+    if (actualValue !== expectedValue) {
+      throw new Error(
+        `Unsafe journey config ${filePath}: expected environment variable ${name}="${expectedValue}"`
+      );
     }
   }
 }
