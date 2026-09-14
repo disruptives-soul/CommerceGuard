@@ -5,7 +5,7 @@ Objetivo: correr piloto recurrente staging sin VM propia, usando Vercel Cron y S
 ## Arquitectura
 
 ```text
-Vercel Cron */5
+Vercel Cron daily on Hobby, */5 on Pro
   -> /api/commerceguard/run
     -> Playwright no-submit
     -> Supabase Postgres: runs, scheduler events, alert state
@@ -64,14 +64,16 @@ Configurado en:
 vercel.json
 ```
 
-Cron:
+Cron compatible con Vercel Hobby:
 
 ```json
 {
   "path": "/api/commerceguard/run",
-  "schedule": "*/5 * * * *"
+  "schedule": "0 13 * * *"
 }
 ```
+
+`0 13 * * *` corre una vez por dia a las 13:00 UTC, 10:00 Buenos Aires. Para piloto cada 5 minutos usar Vercel Pro o el despliegue Docker/VM.
 
 Endpoint:
 

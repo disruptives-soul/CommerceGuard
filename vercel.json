@@ -4,7 +4,7 @@
   "crons": [
     {
       "path": "/api/commerceguard/run",
-      "schedule": "*/5 * * * *"
+      "schedule": "0 13 * * *"
     }
   ],
   "functions": {
