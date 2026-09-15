@@ -23,6 +23,7 @@
   },
   "dependencies": {
     "playwright": "^1.47.2",
+    "playwright-core": "^1.47.2",
     "tsx": "^4.19.1"
   },
   "devDependencies": {

@@ -1,5 +1,5 @@
 import { join } from "node:path";
-import type { Locator, Page } from "playwright";
+import type { Locator, Page } from "playwright-core";
 import type { Assertion, JourneyStep, StepResult } from "../types.js";
 
 export interface ExecuteStepOptions {

@@ -1,6 +1,7 @@
 import { mkdir } from "node:fs/promises";
 import { join } from "node:path";
-import { chromium } from "playwright";
+import { chromium } from "playwright-core";
+import type { ConsoleMessage, Request } from "playwright-core";
 import { createRunArtifacts, writeReport, writeResult } from "../evidence/artifacts.js";
 import type { EvidenceEvent, JourneyAttemptResult, JourneyConfig, JourneyResult, StepResult } from "../types.js";
 import { classifyError } from "./classifyResult.js";
@@ -68,7 +69,7 @@ async function runJourneyAttempt(
   const evidence: EvidenceEvent[] = [];
   const steps: StepResult[] = [];
 
-  page.on("console", (message) => {
+  page.on("console", (message: ConsoleMessage) => {
     if (["error", "warning"].includes(message.type())) {
       evidence.push({
         type: "console",
@@ -78,7 +79,7 @@ async function runJourneyAttempt(
     }
   });
 
-  page.on("pageerror", (error) => {
+  page.on("pageerror", (error: Error) => {
     evidence.push({
       type: "pageerror",
       message: error.message,
@@ -86,7 +87,7 @@ async function runJourneyAttempt(
     });
   });
 
-  page.on("requestfailed", (request) => {
+  page.on("requestfailed", (request: Request) => {
     evidence.push({
       type: "requestfailed",
       message: request.failure()?.errorText ?? "request failed",
