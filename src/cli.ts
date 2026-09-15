@@ -15,6 +15,7 @@ async function main(): Promise<void> {
   const result = await runJourney(config);
 
   console.log(JSON.stringify({
+    runId: result.runId,
     journeyId: result.journeyId,
     projectId: result.projectId,
     reportGroup: result.reportGroup,
@@ -38,6 +39,7 @@ main().catch((error) => {
   const message = error instanceof Error ? error.message : String(error);
 
   console.log(JSON.stringify({
+    runId: undefined,
     journeyId: "unknown",
     projectId: undefined,
     reportGroup: "real",

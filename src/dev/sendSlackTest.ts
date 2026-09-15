@@ -22,6 +22,7 @@ async function main(): Promise<void> {
       runDir: "local-smoke-test",
       failedStep: "notify:test-slack",
       result: {
+        runId: "local-slack-webhook-smoke-test",
         journeyId: "slack-webhook-smoke-test",
         status: "UNEXPECTED_STATE",
         productStatus: "MONITOR_FAILURE",

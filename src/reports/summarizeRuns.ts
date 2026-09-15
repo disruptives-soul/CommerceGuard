@@ -3,6 +3,7 @@ import { join, relative } from "node:path";
 import type { JourneyResult, ReportGroup } from "../types.js";
 
 type RunSummary = {
+  runId?: string;
   journeyId: string;
   projectId?: string;
   adapter?: string;
@@ -72,6 +73,7 @@ function toSummary(result: JourneyResult): RunSummary {
   const failedStep = result.steps.find((step) => step.status === "FAIL");
 
   return {
+    runId: result.runId,
     journeyId: result.journeyId,
     projectId: result.projectId ?? inferProjectId(result),
     adapter: result.adapter ?? inferAdapter(result),
@@ -134,9 +136,9 @@ ${conclusion}
 
 ## Latest Runs
 
-| Started | Project | Group | Journey | Status | Product | Failed step | Reason | Duration | Attempts | Vehicle | Evidence |
-| --- | --- | --- | --- | --- | --- | --- | --- | ---: | ---: | --- | --- |
-${summaries.map((run) => `| ${run.startedAt} | ${run.projectId ?? "-"} | ${run.reportGroup} | ${run.journeyId} | ${run.status} | ${run.productStatus} | ${run.failedStep ?? "-"} | ${escapeTable(run.reason)} | ${run.durationMs} ms | ${run.attempts}${run.recoveredByRetry ? " recovered" : ""} | ${escapeTable(run.selectedVehicleName ?? run.selectedVehicleUrl ?? "-")} | \`${run.runDir}\` |`).join("\n")}
+| Started | Run ID | Project | Group | Journey | Status | Product | Failed step | Reason | Duration | Attempts | Vehicle | Evidence |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | ---: | ---: | --- | --- |
+${summaries.map((run) => `| ${run.startedAt} | ${run.runId ?? "-"} | ${run.projectId ?? "-"} | ${run.reportGroup} | ${run.journeyId} | ${run.status} | ${run.productStatus} | ${run.failedStep ?? "-"} | ${escapeTable(run.reason)} | ${run.durationMs} ms | ${run.attempts}${run.recoveredByRetry ? " recovered" : ""} | ${escapeTable(run.selectedVehicleName ?? run.selectedVehicleUrl ?? "-")} | \`${run.runDir}\` |`).join("\n")}
 `;
 }
 

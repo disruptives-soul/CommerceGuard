@@ -23,7 +23,7 @@ export async function runJourney(config: JourneyConfig): Promise<JourneyResult> 
     const attemptScreenshotsDir = join(artifacts.screenshotsDir, `attempt-${attempt}`);
     await mkdir(attemptScreenshotsDir, { recursive: true });
 
-    lastResult = await runJourneyAttempt(config, attempt, startedAt, artifacts.runDir, attemptScreenshotsDir);
+    lastResult = await runJourneyAttempt(config, attempt, startedAt, artifacts.runId, artifacts.runDir, attemptScreenshotsDir);
     attemptsDetail.push(toAttemptDetail(lastResult, attempt));
     lastResult.attemptsDetail = attemptsDetail;
 
@@ -57,6 +57,7 @@ async function runJourneyAttempt(
   config: JourneyConfig,
   attempt: number,
   startedAt: Date,
+  runId: string,
   runDir: string,
   screenshotsDir: string
 ): Promise<JourneyResult> {
@@ -102,6 +103,7 @@ async function runJourneyAttempt(
       const stepStartedAt = Date.now();
       console.log("CommerceGuard step started", JSON.stringify({
         journeyId: config.id,
+        runId,
         attempt,
         stepId: step.id,
         action: step.action
@@ -118,6 +120,7 @@ async function runJourneyAttempt(
       steps.push(result);
       console.log("CommerceGuard step completed", JSON.stringify({
         journeyId: config.id,
+        runId,
         attempt,
         stepId: step.id,
         status: result.status,
@@ -134,6 +137,7 @@ async function runJourneyAttempt(
     const selectedVehicle = getSelectedVehicle(steps);
     const classification = classifyProductStatus("PASS", steps);
     return {
+      runId,
       journeyId: config.id,
       journeyName: config.name,
       projectId: config.projectId,
@@ -161,6 +165,7 @@ async function runJourneyAttempt(
     const failedStep = steps.find((step) => step.status === "FAIL")?.id;
     const classification = classifyProductStatus(status, steps, error instanceof Error ? error.message : String(error));
     return {
+      runId,
       journeyId: config.id,
       journeyName: config.name,
       projectId: config.projectId,

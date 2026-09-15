@@ -5,6 +5,7 @@ import type { JourneyResult, ProductStatus, ReportGroup } from "../types.js";
 export type ReportScope = ReportGroup | "all";
 
 export type SchedulerEvent = {
+  runId?: string;
   timestamp: string;
   projectId?: string;
   environment: string;
@@ -159,6 +160,7 @@ export function buildRunMetrics(results: JourneyResult[]): RunMetrics {
 export function buildSchedulerMetrics(events: SchedulerEvent[]): RunMetrics {
   const pseudoResults = events.map((event) => ({
     journeyId: event.journeyId,
+    runId: event.runId ?? event.runDir,
     journeyName: event.jobId,
     projectId: event.projectId,
     reportGroup: event.reportGroup,

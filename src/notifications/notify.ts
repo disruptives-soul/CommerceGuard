@@ -16,7 +16,7 @@ export interface NotificationEvent {
   reason: string;
   runDir: string;
   failedStep?: string;
-  result: Pick<JourneyResult, "journeyId" | "status" | "productStatus" | "durationMs" | "currentUrl" | "selectedVehicle">;
+  result: Pick<JourneyResult, "runId" | "journeyId" | "status" | "productStatus" | "durationMs" | "currentUrl" | "selectedVehicle">;
 }
 
 export async function notify(config: NotificationConfig | undefined, event: NotificationEvent): Promise<boolean> {
@@ -77,6 +77,7 @@ function toSlackPayload(event: NotificationEvent): { text: string; blocks: unkno
         fields: [
           { type: "mrkdwn", text: `*Project*\n${escapeSlack(event.projectId ?? "-")}` },
           { type: "mrkdwn", text: `*Job*\n${escapeSlack(event.jobId)}` },
+          { type: "mrkdwn", text: `*Run ID*\n${escapeSlack(event.result.runId)}` },
           { type: "mrkdwn", text: `*Product status*\n${event.productStatus}` },
           { type: "mrkdwn", text: `*Technical status*\n${event.result.status}` },
           { type: "mrkdwn", text: `*Failed step*\n${escapeSlack(event.failedStep ?? "-")}` },

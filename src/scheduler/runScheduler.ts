@@ -144,6 +144,7 @@ async function writeSchedulerEvent(config: SchedulerConfig, job: SchedulerJob, r
   await mkdir(dir, { recursive: true });
   const event = {
     timestamp: new Date().toISOString(),
+    runId: result.runId,
     projectId: result.projectId ?? config.projectId,
     environment: config.environment,
     jobId: job.id,

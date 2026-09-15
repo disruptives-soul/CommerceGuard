@@ -100,6 +100,7 @@ export interface StepResult {
 }
 
 export interface JourneyResult {
+  runId: string;
   journeyId: string;
   journeyName: string;
   projectId?: string;

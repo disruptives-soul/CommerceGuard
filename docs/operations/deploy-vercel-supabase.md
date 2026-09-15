@@ -40,6 +40,8 @@ Crea:
 - `commerceguard_alert_state`
 - bucket privado `commerceguard-evidence`
 
+Volver a ejecutar el mismo archivo cuando se agreguen columnas compatibles, por ejemplo `run_id`, `last_run_id` y `last_alert_run_id`.
+
 ## 2. Vercel env vars
 
 Configurar en Vercel Project Settings -> Environment Variables:
@@ -82,6 +84,8 @@ Cron compatible con Vercel Hobby:
 ```
 
 `0 13 * * *` corre una vez por dia a las 13:00 UTC, 10:00 Buenos Aires. Para piloto cada 5 minutos usar Vercel Pro o el despliegue Docker/VM.
+
+Para una observacion corta de 2 horas sin costo extra, mantener el cron diario activo y ejecutar corridas manuales desde Vercel cuando se necesite mas muestra.
 
 Endpoint:
 

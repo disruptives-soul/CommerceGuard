@@ -41,13 +41,13 @@ ${failedStepsBlock(metrics)}
 
 ## Latest Failures
 
-${latestFailures.length > 0 ? latestFailures.map((event) => `- ${event.timestamp} ${event.projectId ?? "-"} ${event.environment} ${event.jobId} ${event.productStatus} ${event.failedStep ?? "-"}: ${escapeMarkdown(event.reason)} (\`${event.runDir}\`)`).join("\n") : "- None"}
+${latestFailures.length > 0 ? latestFailures.map((event) => `- ${event.timestamp} ${event.projectId ?? "-"} ${event.environment} ${event.jobId} ${event.productStatus} ${event.failedStep ?? "-"} runId=${event.runId ?? "-"}: ${escapeMarkdown(event.reason)} (\`${event.runDir}\`)`).join("\n") : "- None"}
 
 ## Latest Events
 
-| Timestamp | Project | Env | Job | Product | Technical | Duration | Evidence |
-| --- | --- | --- | --- | --- | --- | ---: | --- |
-${events.slice(0, 50).map((event) => `| ${event.timestamp} | ${event.projectId ?? "-"} | ${event.environment} | ${event.jobId} | ${event.productStatus} | ${event.status} | ${event.durationMs} ms | \`${event.runDir}\` |`).join("\n")}
+| Timestamp | Run ID | Project | Env | Job | Product | Technical | Duration | Evidence |
+| --- | --- | --- | --- | --- | --- | --- | ---: | --- |
+${events.slice(0, 50).map((event) => `| ${event.timestamp} | ${event.runId ?? "-"} | ${event.projectId ?? "-"} | ${event.environment} | ${event.jobId} | ${event.productStatus} | ${event.status} | ${event.durationMs} ms | \`${event.runDir}\` |`).join("\n")}
 `;
 
   await mkdir(join("runs", "_scheduler"), { recursive: true });

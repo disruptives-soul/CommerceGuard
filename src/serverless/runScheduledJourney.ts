@@ -35,6 +35,7 @@ export type ServerlessRunOutput = {
   environment: string;
   results: Array<{
     jobId: string;
+    runId: string;
     journeyId: string;
     productStatus: ProductStatus;
     status: JourneyResult["status"];
@@ -72,6 +73,7 @@ export async function runScheduledJourney(configPath = "configs/scheduler.car-on
     const notificationSent = await maybeNotify(config, job, result);
     await insertSchedulerEventToSupabase({
       timestamp: new Date().toISOString(),
+      runId: result.runId,
       projectId: result.projectId ?? config.projectId,
       environment: result.environment ?? config.environment,
       jobId: job.id,
@@ -91,6 +93,7 @@ export async function runScheduledJourney(configPath = "configs/scheduler.car-on
 
     results.push({
       jobId: job.id,
+      runId: result.runId,
       journeyId: result.journeyId,
       productStatus: result.productStatus,
       status: result.status,
@@ -184,7 +187,9 @@ async function maybeNotify(config: SchedulerConfig, job: SchedulerJob, result: J
       environment,
       job_id: job.id,
       consecutive_alertable: consecutiveAlertable,
-      last_alerted: notificationSent || Boolean(previousState?.last_alerted)
+      last_alerted: notificationSent || Boolean(previousState?.last_alerted),
+      last_run_id: result.runId,
+      last_alert_run_id: notificationSent ? result.runId : previousState?.last_alert_run_id ?? null
     });
     return notificationSent;
   }
@@ -206,7 +211,9 @@ async function maybeNotify(config: SchedulerConfig, job: SchedulerJob, result: J
     environment,
     job_id: job.id,
     consecutive_alertable: 0,
-    last_alerted: false
+    last_alerted: false,
+    last_run_id: result.runId,
+    last_alert_run_id: null
   });
   return notificationSent;
 }

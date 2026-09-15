@@ -1,9 +1,11 @@
 import { mkdir, writeFile } from "node:fs/promises";
+import { randomUUID } from "node:crypto";
 import { join, resolve } from "node:path";
 import { tmpdir } from "node:os";
 import type { JourneyResult } from "../types.js";
 
 export interface RunArtifacts {
+  runId: string;
   runDir: string;
   screenshotsDir: string;
   resultPath: string;
@@ -13,12 +15,14 @@ export interface RunArtifacts {
 export async function createRunArtifacts(journeyId: string): Promise<RunArtifacts> {
   const safeJourneyId = journeyId.replace(/[^a-z0-9-_]/gi, "-").toLowerCase();
   const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-  const runDir = resolve(runsRoot(), safeJourneyId, timestamp);
+  const runId = `${timestamp}-${randomUUID()}`;
+  const runDir = resolve(runsRoot(), safeJourneyId, runId);
   const screenshotsDir = join(runDir, "screenshots");
 
   await mkdir(screenshotsDir, { recursive: true });
 
   return {
+    runId,
     runDir,
     screenshotsDir,
     resultPath: join(runDir, "result.json"),
@@ -62,6 +66,7 @@ function buildReport(result: JourneyResult): string {
 ## Summary
 
 - Journey: ${result.journeyName} (\`${result.journeyId}\`)
+- Run ID: \`${result.runId}\`
 - Project: ${result.projectId ?? "-"}
 - Adapter: ${result.adapter ?? "-"}
 - Report group: ${result.reportGroup}

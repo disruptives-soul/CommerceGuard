@@ -3,6 +3,7 @@ import { basename, join, relative } from "node:path";
 import type { JourneyResult, ProductStatus, ReportGroup } from "../types.js";
 
 export type SupabaseSchedulerEvent = {
+  runId: string;
   timestamp: string;
   projectId: string;
   environment: string;
@@ -27,6 +28,8 @@ export type AlertState = {
   job_id: string;
   consecutive_alertable: number;
   last_alerted: boolean;
+  last_run_id?: string | null;
+  last_alert_run_id?: string | null;
 };
 
 type SupabaseConfig = {
@@ -56,7 +59,8 @@ export async function insertSchedulerEventToSupabase(event: SupabaseSchedulerEve
   }
 
   const config = getConfig();
-  await restRequest(config, "commerceguard_scheduler_events", {
+  const body = {
+    run_id: event.runId,
     timestamp: event.timestamp,
     project_id: event.projectId,
     environment: event.environment,
@@ -73,7 +77,9 @@ export async function insertSchedulerEventToSupabase(event: SupabaseSchedulerEve
     current_url: event.currentUrl ?? null,
     run_dir: event.runDir,
     notification_sent: Boolean(event.notificationSent)
-  });
+  };
+
+  await restRequestWithMissingColumnFallback(config, "commerceguard_scheduler_events", body, ["run_id"]);
 }
 
 export async function getAlertState(projectId: string, environment: string, jobId: string): Promise<AlertState | undefined> {
@@ -107,6 +113,16 @@ export async function upsertAlertState(state: AlertState): Promise<void> {
 
   const config = getConfig();
   const url = `${config.url}/rest/v1/commerceguard_alert_state?on_conflict=project_id,environment,job_id`;
+  const body = {
+    project_id: state.project_id,
+    environment: state.environment,
+    job_id: state.job_id,
+    consecutive_alertable: state.consecutive_alertable,
+    last_alerted: state.last_alerted,
+    last_run_id: state.last_run_id ?? null,
+    last_alert_run_id: state.last_alert_run_id ?? null,
+    updated_at: new Date().toISOString()
+  };
   const response = await fetch(url, {
     method: "POST",
     headers: {
@@ -114,23 +130,38 @@ export async function upsertAlertState(state: AlertState): Promise<void> {
       "content-type": "application/json",
       prefer: "resolution=merge-duplicates"
     },
-    body: JSON.stringify({
-      project_id: state.project_id,
-      environment: state.environment,
-      job_id: state.job_id,
-      consecutive_alertable: state.consecutive_alertable,
-      last_alerted: state.last_alerted,
-      updated_at: new Date().toISOString()
-    })
+    body: JSON.stringify(body)
   });
 
   if (!response.ok) {
-    throw new Error(`Supabase alert state upsert failed: ${response.status} ${await response.text()}`);
+    const responseText = await response.text();
+
+    if (missingAnyColumn(responseText, ["last_run_id", "last_alert_run_id"])) {
+      const fallbackBody = stripColumns(body, ["last_run_id", "last_alert_run_id"]);
+      const fallbackResponse = await fetch(url, {
+        method: "POST",
+        headers: {
+          ...authHeaders(config),
+          "content-type": "application/json",
+          prefer: "resolution=merge-duplicates"
+        },
+        body: JSON.stringify(fallbackBody)
+      });
+
+      if (fallbackResponse.ok) {
+        return;
+      }
+
+      throw new Error(`Supabase alert state upsert failed: ${fallbackResponse.status} ${await fallbackResponse.text()}`);
+    }
+
+    throw new Error(`Supabase alert state upsert failed: ${response.status} ${responseText}`);
   }
 }
 
 async function insertRun(config: SupabaseConfig, result: JourneyResult, evidenceBasePath?: string): Promise<void> {
-  await restRequest(config, "commerceguard_runs", {
+  const body = {
+    run_id: result.runId,
     journey_id: result.journeyId,
     journey_name: result.journeyName,
     project_id: result.projectId ?? null,
@@ -151,11 +182,13 @@ async function insertRun(config: SupabaseConfig, result: JourneyResult, evidence
     run_dir: result.runDir,
     evidence_base_path: evidenceBasePath ?? null,
     result_json: result
-  });
+  };
+
+  await restRequestWithMissingColumnFallback(config, "commerceguard_runs", body, ["run_id"]);
 }
 
 async function uploadRunArtifacts(config: SupabaseConfig, result: JourneyResult): Promise<string | undefined> {
-  const basePath = `${result.projectId ?? "unknown"}/${result.environment ?? "unknown"}/${result.journeyId}/${basename(result.runDir)}`;
+  const basePath = `${result.projectId ?? "unknown"}/${result.environment ?? "unknown"}/${result.journeyId}/${result.runId ?? basename(result.runDir)}`;
   const files = await listFiles(result.runDir);
 
   for (const filePath of files) {
@@ -244,6 +277,40 @@ async function restRequest(config: SupabaseConfig, table: string, body: unknown)
   if (!response.ok) {
     throw new Error(`Supabase insert ${table} failed: ${response.status} ${await response.text()}`);
   }
+}
+
+async function restRequestWithMissingColumnFallback(
+  config: SupabaseConfig,
+  table: string,
+  body: Record<string, unknown>,
+  fallbackColumns: string[]
+): Promise<void> {
+  try {
+    await restRequest(config, table, body);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+
+    if (!missingAnyColumn(message, fallbackColumns)) {
+      throw error;
+    }
+
+    await restRequest(config, table, stripColumns(body, fallbackColumns));
+  }
+}
+
+function stripColumns<T extends Record<string, unknown>>(body: T, columns: string[]): Record<string, unknown> {
+  const output: Record<string, unknown> = { ...body };
+
+  for (const column of columns) {
+    delete output[column];
+  }
+
+  return output;
+}
+
+function missingAnyColumn(message: string, columns: string[]): boolean {
+  const lower = message.toLowerCase();
+  return columns.some((column) => lower.includes(column.toLowerCase()));
 }
 
 function authHeaders(config: SupabaseConfig): Record<string, string> {
