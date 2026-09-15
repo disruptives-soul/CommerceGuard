@@ -62,7 +62,7 @@ CG_SCHEDULER_CONFIG=configs/scheduler.car-one.production-no-submit.slack.json
 CG_PRODUCTION_NO_SUBMIT=true
 ```
 
-La recipe productiva usa `https://www.carone.com.ar` con allowlist propia y corta en el modal antes de enviar datos.
+La recipe productiva usa `https://www.carone.com.ar`, permite tambien el redirect a `https://carone.com.ar`, y corta en el modal antes de enviar datos.
 
 ## 3. Vercel cron
 

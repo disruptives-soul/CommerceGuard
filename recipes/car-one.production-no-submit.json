@@ -9,7 +9,8 @@
   "stopBeforeIrreversibleAction": true,
   "safety": {
     "allowedBaseUrlPrefixes": [
-      "https://www.carone.com.ar"
+      "https://www.carone.com.ar",
+      "https://carone.com.ar"
     ],
     "requiredEnv": {
       "CG_PRODUCTION_NO_SUBMIT": "true"
