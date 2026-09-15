@@ -22,6 +22,7 @@ export default async function handler(request: IncomingMessage, response: Server
 
   try {
     const result = await runScheduledJourney(process.env.CG_SCHEDULER_CONFIG ?? "configs/scheduler.car-one.staging.slack.json");
+    console.log("CommerceGuard serverless run completed", JSON.stringify(result));
     sendJson(response, 200, result);
   } catch (error) {
     console.error("CommerceGuard serverless run failed", error);
