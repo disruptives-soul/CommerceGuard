@@ -1,5 +1,6 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
+import { tmpdir } from "node:os";
 import type { JourneyResult } from "../types.js";
 
 export interface RunArtifacts {
@@ -12,7 +13,7 @@ export interface RunArtifacts {
 export async function createRunArtifacts(journeyId: string): Promise<RunArtifacts> {
   const safeJourneyId = journeyId.replace(/[^a-z0-9-_]/gi, "-").toLowerCase();
   const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-  const runDir = resolve("runs", safeJourneyId, timestamp);
+  const runDir = resolve(runsRoot(), safeJourneyId, timestamp);
   const screenshotsDir = join(runDir, "screenshots");
 
   await mkdir(screenshotsDir, { recursive: true });
@@ -23,6 +24,18 @@ export async function createRunArtifacts(journeyId: string): Promise<RunArtifact
     resultPath: join(runDir, "result.json"),
     reportPath: join(runDir, "report.md")
   };
+}
+
+function runsRoot(): string {
+  if (process.env.CG_RUNS_DIR) {
+    return process.env.CG_RUNS_DIR;
+  }
+
+  if (process.env.VERCEL) {
+    return join(tmpdir(), "commerceguard-runs");
+  }
+
+  return "runs";
 }
 
 export async function writeResult(result: JourneyResult, resultPath: string): Promise<void> {
