@@ -10,7 +10,7 @@ Vercel Cron daily on Hobby, */5 on Pro
     -> Playwright no-submit
     -> Supabase Postgres: runs, scheduler events, alert state
     -> Supabase Storage: result.json, report.md, screenshots
-    -> Slack webhook si hay 2 fallas consecutivas
+    -> Slack webhook para status PASS y/o alertas segun policy
 ```
 
 ## Requisitos
@@ -125,9 +125,11 @@ Supabase:
 
 Slack:
 
-- No avisa por `PASS`.
+- En la config staging actual avisa por `PASS` en cada corrida por `notifyEveryRunOn`.
 - Avisa luego de 2 `COMMERCE_FAILURE` o `MONITOR_FAILURE` consecutivos.
 
 ## Nota
 
 Si Playwright/Chromium no inicia en Vercel por limite de runtime o binario, usar Docker/VM como fallback. La ruta Vercel + Supabase ya deja la persistencia y politica listas.
+
+Las capturas generadas por CommerceGuard enmascaran inputs sensibles comunes antes de guardar evidencia, por ejemplo nombre, telefono, email y password.

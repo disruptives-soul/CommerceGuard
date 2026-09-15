@@ -222,6 +222,7 @@ async function captureStepScreenshot(
 ): Promise<string | undefined> {
   const safeName = (name ?? stepId).replace(/[^a-z0-9-_]/gi, "-").toLowerCase();
   const screenshotPath = join(screenshotsDir, `${safeName}.png`);
+  const restoreSensitiveFields = await maskSensitiveFieldsForScreenshot(page);
   try {
     await page.screenshot({
       path: screenshotPath,
@@ -230,6 +231,69 @@ async function captureStepScreenshot(
     });
   } catch {
     return undefined;
+  } finally {
+    await restoreSensitiveFields();
   }
   return screenshotPath;
+}
+
+async function maskSensitiveFieldsForScreenshot(page: Page): Promise<() => Promise<void>> {
+  const handles = await page.evaluateHandle(() => {
+    const selectors = [
+      "input[type='email']",
+      "input[type='password']",
+      "input[type='tel']",
+      "input[name*='email' i]",
+      "input[name*='mail' i]",
+      "input[name*='name' i]",
+      "input[name*='nombre' i]",
+      "input[name*='phone' i]",
+      "input[name*='tel' i]",
+      "input[name*='telefono' i]",
+      "input[id*='email' i]",
+      "input[id*='mail' i]",
+      "input[id*='name' i]",
+      "input[id*='nombre' i]",
+      "input[id*='phone' i]",
+      "input[id*='tel' i]",
+      "input[id*='telefono' i]",
+      "input[autocomplete*='email' i]",
+      "input[autocomplete*='name' i]",
+      "input[autocomplete*='tel' i]",
+      "textarea[name*='email' i]",
+      "textarea[name*='mail' i]",
+      "textarea[name*='name' i]",
+      "textarea[name*='nombre' i]",
+      "textarea[name*='phone' i]",
+      "textarea[name*='tel' i]",
+      "textarea[name*='telefono' i]"
+    ];
+    const fields = Array.from(document.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>(selectors.join(",")));
+
+    return fields.map((field) => {
+      const previousValue = field.value;
+      field.value = "[redacted]";
+      field.dispatchEvent(new Event("input", { bubbles: true }));
+      field.dispatchEvent(new Event("change", { bubbles: true }));
+      return { field, previousValue };
+    });
+  }).catch(() => undefined);
+
+  return async () => {
+    if (!handles) {
+      return;
+    }
+
+    try {
+      await page.evaluate((entries) => {
+        for (const entry of entries as Array<{ field: HTMLInputElement | HTMLTextAreaElement; previousValue: string }>) {
+          entry.field.value = entry.previousValue;
+          entry.field.dispatchEvent(new Event("input", { bubbles: true }));
+          entry.field.dispatchEvent(new Event("change", { bubbles: true }));
+        }
+      }, handles);
+    } finally {
+      await handles.dispose().catch(() => undefined);
+    }
+  };
 }
