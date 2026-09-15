@@ -187,7 +187,7 @@ async function listFiles(dir: string): Promise<string[]> {
 }
 
 async function uploadObject(config: SupabaseConfig, path: string, body: Buffer, contentType: string): Promise<void> {
-  const url = `${config.url}/storage/v1/object/${config.bucket}/${path}`;
+  const url = buildStorageObjectUrl(config, path);
   const response = await fetch(url, {
     method: "POST",
     headers: {
@@ -202,6 +202,32 @@ async function uploadObject(config: SupabaseConfig, path: string, body: Buffer, 
   if (!response.ok) {
     throw new Error(`Supabase storage upload failed: ${response.status} ${await response.text()}`);
   }
+}
+
+function buildStorageObjectUrl(config: SupabaseConfig, path: string): string {
+  const encodedBucket = encodeURIComponent(cleanPathSegment(config.bucket, "bucket"));
+  const encodedPath = encodeStoragePath(path);
+  return `${config.url}/storage/v1/object/${encodedBucket}/${encodedPath}`;
+}
+
+function encodeStoragePath(path: string): string {
+  const segments = path
+    .replace(/\\/g, "/")
+    .split("/")
+    .map((segment) => cleanPathSegment(segment, "path"))
+    .map(encodeURIComponent);
+
+  return segments.join("/");
+}
+
+function cleanPathSegment(segment: string, label: string): string {
+  const trimmed = segment.trim();
+
+  if (!trimmed || trimmed === "." || trimmed === "..") {
+    throw new Error(`Invalid Supabase storage ${label} segment`);
+  }
+
+  return trimmed;
 }
 
 async function restRequest(config: SupabaseConfig, table: string, body: unknown): Promise<void> {
