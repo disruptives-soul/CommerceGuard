@@ -49,8 +49,20 @@ export async function runScheduledJourney(configPath = "configs/scheduler.car-on
 
   for (const job of config.jobs) {
     const journeyConfig = await loadJourneyConfig(job.recipe);
+    const effectiveJourneyConfig = applyServerlessLimits(journeyConfig);
+
+    console.log("CommerceGuard scheduled job started", JSON.stringify({
+      projectId: config.projectId,
+      environment: config.environment,
+      jobId: job.id,
+      journeyId: effectiveJourneyConfig.id,
+      retryAttempts: effectiveJourneyConfig.retry?.attempts ?? 1,
+      timeouts: effectiveJourneyConfig.timeouts,
+      baseOrigin: safeOrigin(effectiveJourneyConfig.baseUrl)
+    }));
+
     const result = await runJourney({
-      ...journeyConfig,
+      ...effectiveJourneyConfig,
       projectId: journeyConfig.projectId ?? config.projectId,
       environment: journeyConfig.environment ?? config.environment
     });
@@ -92,6 +104,34 @@ export async function runScheduledJourney(configPath = "configs/scheduler.car-on
     environment: config.environment,
     results
   };
+}
+
+function applyServerlessLimits<T extends { retry?: { attempts?: number; delayMs?: number }; timeouts?: { navigationMs?: number; stepMs?: number } }>(
+  config: T
+): T {
+  if (!process.env.VERCEL) {
+    return config;
+  }
+
+  return {
+    ...config,
+    retry: {
+      ...config.retry,
+      attempts: 1
+    },
+    timeouts: {
+      navigationMs: Math.min(config.timeouts?.navigationMs ?? 20000, 20000),
+      stepMs: Math.min(config.timeouts?.stepMs ?? 10000, 10000)
+    }
+  };
+}
+
+function safeOrigin(value: string): string {
+  try {
+    return new URL(value).origin;
+  } catch {
+    return "(invalid-url)";
+  }
 }
 
 async function maybeNotify(config: SchedulerConfig, job: SchedulerJob, result: JourneyResult): Promise<boolean> {

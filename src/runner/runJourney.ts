@@ -99,6 +99,14 @@ async function runJourneyAttempt(
 
   try {
     for (const step of config.steps) {
+      const stepStartedAt = Date.now();
+      console.log("CommerceGuard step started", JSON.stringify({
+        journeyId: config.id,
+        attempt,
+        stepId: step.id,
+        action: step.action
+      }));
+
       const result = await executeStep({
         page,
         step,
@@ -108,6 +116,14 @@ async function runJourneyAttempt(
       });
 
       steps.push(result);
+      console.log("CommerceGuard step completed", JSON.stringify({
+        journeyId: config.id,
+        attempt,
+        stepId: step.id,
+        status: result.status,
+        durationMs: Date.now() - stepStartedAt,
+        currentUrl: result.currentUrl
+      }));
 
       if (result.status === "FAIL") {
         throw new Error(result.error ?? `Step failed: ${step.id}`);
