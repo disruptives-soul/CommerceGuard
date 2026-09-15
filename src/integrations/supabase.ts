@@ -262,10 +262,17 @@ function getConfig(): SupabaseConfig {
   }
 
   return {
-    url: url.replace(/\/$/, ""),
+    url: normalizeSupabaseProjectUrl(url),
     serviceRoleKey,
     bucket: process.env.SUPABASE_EVIDENCE_BUCKET ?? "commerceguard-evidence"
   };
+}
+
+function normalizeSupabaseProjectUrl(value: string): string {
+  const trimmed = value.trim().replace(/\/$/, "");
+  return trimmed
+    .replace(/\/rest\/v1$/i, "")
+    .replace(/\/storage\/v1$/i, "");
 }
 
 function contentTypeFor(path: string): string {
