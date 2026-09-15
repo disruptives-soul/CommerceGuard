@@ -10,10 +10,7 @@
   "functions": {
     "api/commerceguard/run.ts": {
       "maxDuration": 300,
-      "includeFiles": [
-        "configs/**",
-        "recipes/**"
-      ]
+      "includeFiles": "{configs,recipes}/**"
     }
   }
 }
