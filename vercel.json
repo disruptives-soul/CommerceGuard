@@ -10,7 +10,7 @@
   "functions": {
     "api/commerceguard/run.ts": {
       "maxDuration": 300,
-      "includeFiles": "{configs/**,recipes/**,node_modules/@sparticuz/chromium/bin/**}"
+      "includeFiles": "{configs/**,recipes/**}"
     }
   }
 }
