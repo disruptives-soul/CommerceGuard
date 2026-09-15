@@ -9,7 +9,7 @@ export interface NotificationConfig {
 }
 
 export interface NotificationEvent {
-  type: "alert" | "recovery";
+  type: "alert" | "recovery" | "status";
   projectId?: string;
   jobId: string;
   productStatus: ProductStatus;
@@ -52,8 +52,12 @@ export async function notify(config: NotificationConfig | undefined, event: Noti
 }
 
 function toSlackPayload(event: NotificationEvent): { text: string; blocks: unknown[] } {
-  const icon = event.type === "recovery" ? ":white_check_mark:" : ":warning:";
-  const title = event.type === "recovery" ? "CommerceGuard recovery" : "CommerceGuard alert";
+  const icon = event.type === "alert" ? ":warning:" : ":white_check_mark:";
+  const title = event.type === "alert"
+    ? "CommerceGuard alert"
+    : event.type === "recovery"
+      ? "CommerceGuard recovery"
+      : "CommerceGuard status";
   const vehicle = event.result.selectedVehicle?.name ?? event.result.selectedVehicle?.url ?? "-";
   const text = `${title}: ${event.projectId ?? "-"} / ${event.jobId} / ${event.productStatus}`;
 

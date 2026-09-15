@@ -23,6 +23,7 @@ type AlertPolicy = {
   notifyOn: ProductStatus[];
   minConsecutiveFailures?: number;
   notifyOnRecovery?: boolean;
+  notifyEveryRunOn?: ProductStatus[];
 };
 
 type JobState = {
@@ -87,6 +88,20 @@ async function maybeNotify(config: SchedulerConfig, job: SchedulerJob, result: J
   const minConsecutiveFailures = Math.max(policy.minConsecutiveFailures ?? 2, 1);
   const state = states.get(job.id) ?? { consecutiveAlertable: 0, lastAlerted: false };
   const alertable = policy.notifyOn.includes(result.productStatus);
+  const notifyEveryRun = policy.notifyEveryRunOn?.includes(result.productStatus) ?? false;
+
+  if (notifyEveryRun && !(result.productStatus === "PASS" && state.lastAlerted && policy.notifyOnRecovery !== false)) {
+    await notify(config.notifications, {
+      type: "status",
+      projectId: result.projectId ?? config.projectId,
+      jobId: job.id,
+      productStatus: result.productStatus,
+      reason: result.reason,
+      runDir: result.runDir,
+      failedStep: result.failedStep,
+      result
+    });
+  }
 
   if (alertable) {
     state.consecutiveAlertable += 1;

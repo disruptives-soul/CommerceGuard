@@ -11,7 +11,8 @@
   "alertPolicy": {
     "notifyOn": ["COMMERCE_FAILURE", "MONITOR_FAILURE"],
     "minConsecutiveFailures": 2,
-    "notifyOnRecovery": true
+    "notifyOnRecovery": true,
+    "notifyEveryRunOn": ["PASS"]
   },
   "notifications": {
     "mode": "webhook",

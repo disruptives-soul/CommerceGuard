@@ -27,6 +27,7 @@ type AlertPolicy = {
   notifyOn: ProductStatus[];
   minConsecutiveFailures?: number;
   notifyOnRecovery?: boolean;
+  notifyEveryRunOn?: ProductStatus[];
 };
 
 export type ServerlessRunOutput = {
@@ -145,7 +146,21 @@ async function maybeNotify(config: SchedulerConfig, job: SchedulerJob, result: J
   const environment = result.environment ?? config.environment;
   const previousState = await getAlertState(projectId, environment, job.id);
   const alertable = policy.notifyOn.includes(result.productStatus);
+  const notifyEveryRun = policy.notifyEveryRunOn?.includes(result.productStatus) ?? false;
   let notificationSent = false;
+
+  if (notifyEveryRun && !(result.productStatus === "PASS" && previousState?.last_alerted && policy.notifyOnRecovery !== false)) {
+    notificationSent = await notify(config.notifications, {
+      type: "status",
+      projectId,
+      jobId: job.id,
+      productStatus: result.productStatus,
+      reason: result.reason,
+      runDir: result.runDir,
+      failedStep: result.failedStep,
+      result
+    });
+  }
 
   if (alertable) {
     const consecutiveAlertable = (previousState?.consecutive_alertable ?? 0) + 1;
