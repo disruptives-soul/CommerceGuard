@@ -184,7 +184,35 @@ async function runJourneyAttempt(
       error: error instanceof Error ? error.message : String(error)
     };
   } finally {
+    await closeBrowser(browser);
+  }
+}
+
+async function closeBrowser(browser: Browser): Promise<void> {
+  if (process.env.VERCEL !== "1") {
     await browser.close();
+    return;
+  }
+
+  const timeoutMs = 2_000;
+  let timedOut = false;
+  const timeout = new Promise<void>((resolve) => {
+    const timer = setTimeout(() => {
+      timedOut = true;
+      resolve();
+    }, timeoutMs);
+    timer.unref?.();
+  });
+
+  await Promise.race([
+    browser.close().catch((error: unknown) => {
+      console.warn("CommerceGuard browser close failed", error instanceof Error ? error.message : String(error));
+    }),
+    timeout
+  ]);
+
+  if (timedOut) {
+    console.warn(`CommerceGuard browser close timed out after ${timeoutMs}ms; continuing serverless response`);
   }
 }
 
