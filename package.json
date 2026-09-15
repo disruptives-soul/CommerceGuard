@@ -6,7 +6,7 @@
   "packageManager": "pnpm@10.27.0",
   "type": "module",
   "scripts": {
-    "build": "node scripts/ensurePlaywrightBrowsers.mjs && tsc -p tsconfig.json",
+    "build": "tsc -p tsconfig.json",
     "run": "tsx src/cli.ts",
     "run:repeat": "tsx src/reports/runRepeat.ts",
     "run:example": "tsx src/cli.ts recipes/example-smoke.json",
