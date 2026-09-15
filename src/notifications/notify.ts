@@ -19,21 +19,21 @@ export interface NotificationEvent {
   result: Pick<JourneyResult, "journeyId" | "status" | "productStatus" | "durationMs" | "currentUrl" | "selectedVehicle">;
 }
 
-export async function notify(config: NotificationConfig | undefined, event: NotificationEvent): Promise<void> {
+export async function notify(config: NotificationConfig | undefined, event: NotificationEvent): Promise<boolean> {
   if (!config || config.mode === "off") {
-    return;
+    return false;
   }
 
   if (config.mode === "stdout") {
     console.log(`[notification:${event.type}] ${event.projectId ?? "-"} ${event.jobId} ${event.productStatus}: ${event.reason}`);
     console.log(`  evidence: ${event.runDir}`);
-    return;
+    return true;
   }
 
   const webhookUrl = config.webhookUrlEnv ? process.env[config.webhookUrlEnv] : undefined;
   if (!webhookUrl) {
     console.warn(`Notification skipped: webhook env ${config.webhookUrlEnv ?? "(missing)"} is not set`);
-    return;
+    return false;
   }
 
   const payload = config.format === "slack" ? toSlackPayload(event) : event;
@@ -45,7 +45,10 @@ export async function notify(config: NotificationConfig | undefined, event: Noti
 
   if (!response.ok) {
     console.warn(`Notification webhook returned ${response.status}`);
+    return false;
   }
+
+  return true;
 }
 
 function toSlackPayload(event: NotificationEvent): { text: string; blocks: unknown[] } {

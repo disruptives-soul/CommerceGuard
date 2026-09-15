@@ -121,6 +121,22 @@ $env:CG_WEBHOOK_URL="<slack-incoming-webhook-url>"
 pnpm.cmd run scheduler -- configs/scheduler.car-one.staging.slack.json
 ```
 
+Probar Slack sin ejecutar un journey:
+
+```powershell
+$env:CG_WEBHOOK_URL="<slack-incoming-webhook-url>"
+pnpm.cmd run notify:test-slack
+```
+
+Probar alerta integrada con el mock local roto:
+
+```powershell
+$env:CG_WEBHOOK_URL="<slack-incoming-webhook-url>"
+$env:CG_MOCK_MODE="BROKEN_CTA"
+pnpm.cmd run mock:car-one
+pnpm.cmd run scheduler -- configs/scheduler.car-one.local-slack-alert-test.json --once
+```
+
 La politica default alerta solo por `COMMERCE_FAILURE` y `MONITOR_FAILURE` despues de 2 fallas consecutivas. `INCONCLUSIVE` queda para revision de evidencia, no para alertar fuerte.
 
 La guia de piloto recurrente staging esta en `docs/operations/v0.4-staging-pilot.md`.

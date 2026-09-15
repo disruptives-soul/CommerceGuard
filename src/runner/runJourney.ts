@@ -1,7 +1,8 @@
 import { mkdir } from "node:fs/promises";
 import { join } from "node:path";
-import { chromium } from "playwright-core";
-import type { ConsoleMessage, Request } from "playwright-core";
+import serverlessChromium from "@sparticuz/chromium";
+import { chromium as playwrightChromium } from "playwright-core";
+import type { Browser, ConsoleMessage, Request } from "playwright-core";
 import { createRunArtifacts, writeReport, writeResult } from "../evidence/artifacts.js";
 import type { EvidenceEvent, JourneyAttemptResult, JourneyConfig, JourneyResult, StepResult } from "../types.js";
 import { classifyError } from "./classifyResult.js";
@@ -59,7 +60,7 @@ async function runJourneyAttempt(
   runDir: string,
   screenshotsDir: string
 ): Promise<JourneyResult> {
-  const browser = await chromium.launch({ headless: true });
+  const browser = await launchBrowser();
   const context = await browser.newContext({
     viewport: { width: 1440, height: 1000 },
     userAgent:
@@ -169,6 +170,18 @@ async function runJourneyAttempt(
   } finally {
     await browser.close();
   }
+}
+
+async function launchBrowser(): Promise<Browser> {
+  if (process.env.VERCEL === "1") {
+    return playwrightChromium.launch({
+      args: serverlessChromium.args,
+      executablePath: await serverlessChromium.executablePath(),
+      headless: true
+    });
+  }
+
+  return playwrightChromium.launch({ headless: true });
 }
 
 function toAttemptDetail(result: JourneyResult, attempt: number): JourneyAttemptResult {

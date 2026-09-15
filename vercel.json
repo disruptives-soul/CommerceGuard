@@ -1,9 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "outputDirectory": "public",
-  "env": {
-    "PLAYWRIGHT_BROWSERS_PATH": "0"
-  },
   "crons": [
     {
       "path": "/api/commerceguard/run",
@@ -13,7 +10,7 @@
   "functions": {
     "api/commerceguard/run.ts": {
       "maxDuration": 300,
-      "includeFiles": "{configs/**,recipes/**,node_modules/playwright-core/.local-browsers/**}"
+      "includeFiles": "{configs/**,recipes/**,node_modules/@sparticuz/chromium/bin/**}"
     }
   }
 }

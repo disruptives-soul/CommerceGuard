@@ -1,0 +1,21 @@
+{
+  "projectId": "car-one",
+  "environment": "local-slack-alert-test",
+  "intervalMs": 10000,
+  "jobs": [
+    {
+      "id": "buy-interest-local-slack-alert-test",
+      "recipe": "recipes/car-one.failure-lab-local.json"
+    }
+  ],
+  "alertPolicy": {
+    "notifyOn": ["COMMERCE_FAILURE", "MONITOR_FAILURE"],
+    "minConsecutiveFailures": 1,
+    "notifyOnRecovery": true
+  },
+  "notifications": {
+    "mode": "webhook",
+    "format": "slack",
+    "webhookUrlEnv": "CG_WEBHOOK_URL"
+  }
+}

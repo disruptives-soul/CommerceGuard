@@ -93,7 +93,7 @@ async function maybeNotify(config: SchedulerConfig, job: SchedulerJob, result: J
     const shouldNotify = state.consecutiveAlertable >= minConsecutiveFailures && !state.lastAlerted;
 
     if (shouldNotify) {
-      await notify(config.notifications, {
+      state.lastAlerted = await notify(config.notifications, {
         type: "alert",
         projectId: result.projectId ?? config.projectId,
         jobId: job.id,
@@ -103,7 +103,6 @@ async function maybeNotify(config: SchedulerConfig, job: SchedulerJob, result: J
         failedStep: result.failedStep,
         result
       });
-      state.lastAlerted = true;
     }
   } else {
     if (result.productStatus === "PASS" && state.lastAlerted && policy.notifyOnRecovery !== false) {

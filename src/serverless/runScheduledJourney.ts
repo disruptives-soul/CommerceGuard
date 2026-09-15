@@ -112,7 +112,7 @@ async function maybeNotify(config: SchedulerConfig, job: SchedulerJob, result: J
     const shouldNotify = consecutiveAlertable >= minConsecutiveFailures && !previousState?.last_alerted;
 
     if (shouldNotify) {
-      await notify(config.notifications, {
+      notificationSent = await notify(config.notifications, {
         type: "alert",
         projectId,
         jobId: job.id,
@@ -122,7 +122,6 @@ async function maybeNotify(config: SchedulerConfig, job: SchedulerJob, result: J
         failedStep: result.failedStep,
         result
       });
-      notificationSent = true;
     }
 
     await upsertAlertState({
@@ -130,13 +129,13 @@ async function maybeNotify(config: SchedulerConfig, job: SchedulerJob, result: J
       environment,
       job_id: job.id,
       consecutive_alertable: consecutiveAlertable,
-      last_alerted: shouldNotify || Boolean(previousState?.last_alerted)
+      last_alerted: notificationSent || Boolean(previousState?.last_alerted)
     });
     return notificationSent;
   }
 
   if (result.productStatus === "PASS" && previousState?.last_alerted && policy.notifyOnRecovery !== false) {
-    await notify(config.notifications, {
+    notificationSent = await notify(config.notifications, {
       type: "recovery",
       projectId,
       jobId: job.id,
@@ -145,7 +144,6 @@ async function maybeNotify(config: SchedulerConfig, job: SchedulerJob, result: J
       runDir: result.runDir,
       result
     });
-    notificationSent = true;
   }
 
   await upsertAlertState({

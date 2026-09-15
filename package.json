@@ -12,6 +12,7 @@
     "run:example": "tsx src/cli.ts recipes/example-smoke.json",
     "mock:car-one": "tsx src/dev/carOneMockServer.ts",
     "failure-lab:car-one": "tsx src/dev/runCarOneFailureLab.ts",
+    "notify:test-slack": "tsx src/dev/sendSlackTest.ts",
     "scheduler": "tsx src/scheduler/runScheduler.ts",
     "report:runs": "tsx src/reports/summarizeRuns.ts",
     "report:real": "tsx src/reports/summarizeRuns.ts --group real",
@@ -22,6 +23,7 @@
     "check": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
+    "@sparticuz/chromium": "^153.0.0",
     "playwright": "^1.47.2",
     "playwright-core": "^1.47.2",
     "tsx": "^4.19.1"
