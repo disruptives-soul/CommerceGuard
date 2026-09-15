@@ -1,0 +1,78 @@
+{
+  "id": "car-one-buy-interest-v0",
+  "name": "Car One buy interest journey v0",
+  "projectId": "car-one",
+  "adapter": "car-one",
+  "reportGroup": "real",
+  "baseUrl": "${CARONE_BASE_URL}",
+  "stopBeforeIrreversibleAction": true,
+  "retry": {
+    "attempts": 1,
+    "delayMs": 0
+  },
+  "timeouts": {
+    "navigationMs": 20000,
+    "stepMs": 12000
+  },
+  "steps": [
+    {
+      "id": "open-buy-listing",
+      "action": "goto",
+      "url": "${CARONE_BASE_URL}/comprar",
+      "assertions": [
+        {
+          "type": "urlContains",
+          "value": "/comprar"
+        },
+        {
+          "type": "notTextContains",
+          "value": "Algo salio mal"
+        },
+        {
+          "type": "notTextContains",
+          "value": "No pudimos cargar los autos."
+        }
+      ]
+    },
+    {
+      "id": "wait-vehicle-card-link",
+      "action": "waitForSelector",
+      "selector": "[data-cg=\"vehicle-detail-link\"], a[href*=\"/comprar/usados/\"], a[href*=\"/comprar/0km/\"], a[href*=\"/comprar/pda/\"]"
+    },
+    {
+      "id": "open-first-vehicle-detail",
+      "action": "clickFirst",
+      "selector": "[data-cg=\"vehicle-detail-link\"], a[href*=\"/comprar/usados/\"], a[href*=\"/comprar/0km/\"], a[href*=\"/comprar/pda/\"]",
+      "clickPosition": {
+        "x": 24,
+        "y": 24
+      },
+      "assertions": [
+        {
+          "type": "urlContains",
+          "value": "/comprar/"
+        }
+      ]
+    },
+    {
+      "id": "wait-interest-cta",
+      "action": "waitForSelector",
+      "selector": "[data-cg=\"interest-cta\"], button:has-text(\"Me interesa\")"
+    },
+    {
+      "id": "assert-detail-price",
+      "action": "assertText",
+      "value": "$"
+    },
+    {
+      "id": "click-interest-cta",
+      "action": "clickFirst",
+      "selector": "[data-cg=\"interest-cta\"], button:has-text(\"Me interesa\")"
+    },
+    {
+      "id": "stop-before-submit",
+      "action": "waitForSelector",
+      "selector": "[data-cg=\"lead-modal\"], form:has-text(\"Continuar\"), input[type=\"tel\"], input[placeholder*=\"Tel\" i], input[name*=\"phone\" i], input[name*=\"telefono\" i], button:has-text(\"Continuar\")"
+    }
+  ]
+}

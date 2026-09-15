@@ -5,7 +5,7 @@
   "jobs": [
     {
       "id": "buy-interest-staging",
-      "recipe": "recipes/car-one.template.json"
+      "recipe": "recipes/car-one.vercel.json"
     }
   ],
   "alertPolicy": {

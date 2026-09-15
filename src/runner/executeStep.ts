@@ -219,9 +219,17 @@ async function captureStepScreenshot(
   screenshotsDir: string,
   stepId: string,
   name?: string
-): Promise<string> {
+): Promise<string | undefined> {
   const safeName = (name ?? stepId).replace(/[^a-z0-9-_]/gi, "-").toLowerCase();
   const screenshotPath = join(screenshotsDir, `${safeName}.png`);
-  await page.screenshot({ path: screenshotPath, fullPage: true });
+  try {
+    await page.screenshot({
+      path: screenshotPath,
+      fullPage: !process.env.VERCEL,
+      timeout: process.env.VERCEL ? 5000 : 30000
+    });
+  } catch {
+    return undefined;
+  }
   return screenshotPath;
 }
