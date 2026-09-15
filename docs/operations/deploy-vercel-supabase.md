@@ -1,6 +1,6 @@
 # Deploy CommerceGuard on Vercel + Supabase
 
-Objetivo: correr piloto recurrente staging sin VM propia, usando Vercel Cron y Supabase para evidencia persistente.
+Objetivo: correr piloto recurrente sin VM propia, usando Vercel Cron y Supabase para evidencia persistente. El primer modo validado fue staging; el siguiente modo operativo es produccion no-submit.
 
 ## Arquitectura
 
@@ -45,7 +45,6 @@ Crea:
 Configurar en Vercel Project Settings -> Environment Variables:
 
 ```text
-CARONE_BASE_URL=https://stg.carone.com.ar
 CG_WEBHOOK_URL=https://hooks.slack.com/services/...
 SUPABASE_URL=https://<project-ref>.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=<service-role-key>
@@ -55,6 +54,15 @@ CG_SCHEDULER_CONFIG=configs/scheduler.car-one.staging.slack.json
 ```
 
 No usar anon key para writes server-side. Usar `service_role`, solo como secreto de Vercel.
+
+Para produccion no-submit:
+
+```text
+CG_SCHEDULER_CONFIG=configs/scheduler.car-one.production-no-submit.slack.json
+CG_PRODUCTION_NO_SUBMIT=true
+```
+
+La recipe productiva usa `https://www.carone.com.ar` con allowlist propia y corta en el modal antes de enviar datos.
 
 ## 3. Vercel cron
 
@@ -114,6 +122,8 @@ Esperado:
   ]
 }
 ```
+
+Para produccion no-submit, el `environment` esperado es `production-no-submit` y el `jobId` esperado es `buy-interest-production-no-submit`.
 
 ## 6. Revisar evidencia
 

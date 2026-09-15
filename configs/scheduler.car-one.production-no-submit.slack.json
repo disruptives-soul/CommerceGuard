@@ -1,0 +1,21 @@
+{
+  "projectId": "car-one",
+  "environment": "production-no-submit",
+  "intervalMs": 3600000,
+  "jobs": [
+    {
+      "id": "buy-interest-production-no-submit",
+      "recipe": "recipes/car-one.production-no-submit.json"
+    }
+  ],
+  "alertPolicy": {
+    "notifyOn": ["COMMERCE_FAILURE", "MONITOR_FAILURE"],
+    "minConsecutiveFailures": 2,
+    "notifyOnRecovery": true
+  },
+  "notifications": {
+    "mode": "webhook",
+    "format": "slack",
+    "webhookUrlEnv": "CG_WEBHOOK_URL"
+  }
+}
